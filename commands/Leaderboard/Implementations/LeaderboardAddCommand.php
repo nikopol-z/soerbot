@@ -37,13 +37,13 @@ class LeaderboardAddCommand extends Command
               'key' => 'name',
               'label' => 'name',
               'prompt' => 'Введите имя пользователя',
-              'type' => 'string',
+              'type' => 'user',
             ],
             [
               'key' => 'emoji',
               'label' => 'emoji',
               'prompt' => 'Какую награду добавить?',
-              'type' => 'string',
+              'type' => 'reward',
             ],
           ],
         ]);
@@ -84,6 +84,6 @@ class LeaderboardAddCommand extends Command
 
     private function addReward(ArrayObject $args): bool
     {
-        return $this->users->incrementReward($args['name'], $args['emoji']);
+        return $this->users->incrementReward($args['name']->username, $args['emoji']);
     }
 }
