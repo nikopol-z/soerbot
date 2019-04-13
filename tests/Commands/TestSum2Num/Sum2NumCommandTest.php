@@ -13,17 +13,15 @@ class Sum2NumCommandTest extends TestCase
 
     protected function setUp()
     {
-        #$commandCreate = require __DIR__ . '\..\commands\Sum2Num\Sum2Num.command.php';
-        #D:\_Docs\soerbot\commands\Sum2Num
-        $commandCreate = require 'D:\_Docs\soerbot\commands\Sum2Num\Sum2Num.command.php';
-
+        #$commandCreate = require __DIR__ . '/../../commands/Sum2Num/sum2num.command.php';
+        $commandCreate = require 'D:\_Docs\soerbot\commands\Sum2num\sum2num.command.php';
         $this->client = $this->createMock('\CharlotteDunois\Livia\LiviaClient');
         $registry = $this->createMock('\CharlotteDunois\Livia\CommandRegistry');
         $types = $this->createMock('\CharlotteDunois\Yasmin\Utils\Collection');
 
-        $types->expects($this->exactly(0))->method('has')->willReturn(true);
-        $registry->expects($this->exactly(0))->method('__get')->with('types')->willReturn($types);
-        $this->client->expects($this->exactly(0))->method('__get')->with('registry')->willReturn($registry);
+        $types->expects($this->exactly(1))->method('has')->willReturn(true);
+        $registry->expects($this->exactly(2))->method('__get')->with('types')->willReturn($types);
+        $this->client->expects($this->exactly(2))->method('__get')->with('registry')->willReturn($registry);
 
         $this->command = $commandCreate($this->client);
 
@@ -33,7 +31,7 @@ class Sum2NumCommandTest extends TestCase
     public function testSum2NumBasics()
     {
        $this->assertEquals($this->command->name, 'sum2num');
-       $this->assertEquals($this->command->description, 'Simple command that sums 2 numbers');
+       $this->assertEquals($this->command->description, '...');
        $this->assertEquals($this->command->groupID, 'utils');
     }
 
