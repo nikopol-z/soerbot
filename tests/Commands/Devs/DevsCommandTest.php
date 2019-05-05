@@ -73,7 +73,22 @@ class DevsCommandTest extends TestCase
         $this->assertEquals($this->command->args[0]['type'], 'string');
     }
 
-    public function testRunSayDefaultText()
+    public function testConstructorSetGlobalSettings()
+    {
+        $settings = $this->getPrivateVariableValue($this->command, 'settings');
+
+        $this->assertNotEmpty($settings);
+        $this->assertArrayHasKey('storePath', $settings);
+    }
+
+    public function testRunSayDefaultTextWhenArgumentNotExist()
+    {
+        $commandMessage = $this->createMock('CharlotteDunois\Livia\CommandMessage');
+        $commandMessage->expects($this->once())->method('say')->with($this->message);
+        $this->command->run($commandMessage, new ArrayObject(), false);
+    }
+
+    public function testRunSayDefaultTextWhenArgumentIsEmpty()
     {
         $commandMessage = $this->createMock('CharlotteDunois\Livia\CommandMessage');
         $commandMessage->expects($this->once())->method('say')->with($this->message);

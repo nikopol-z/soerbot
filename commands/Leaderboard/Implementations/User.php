@@ -43,17 +43,10 @@ class User
 
     public function __construct($name, array $rewards, $linesDelimiter = PHP_EOL)
     {
-        if (!empty($rewards)) {
-            foreach ($rewards as $reward) {
-                if ($this->validateReward($reward)) {
-                    $this->rewards[] = $reward;
-                }
-            }
-        }
-
+        $this->rewards = $this->validateRewards($rewards);
         $this->name = $name;
         $this->linesDelimiter = $linesDelimiter;
-        $this->prefix = null;
+        $this->prefix = '';
     }
 
     /**
@@ -73,7 +66,29 @@ class User
     }
 
     /**
+     * Validates that the array of rewards contains right keys.
+     *
+     * @param array $rewards
+     * @return array
+     */
+    protected function validateRewards(array $rewards)
+    {
+        $validRewards = [];
+
+        if (!empty($rewards)) {
+            foreach ($rewards as $reward) {
+                if ($this->validateReward($reward)) {
+                    $validRewards[] = $reward;
+                }
+            }
+        }
+
+        return $validRewards;
+    }
+
+    /**
      * Validates that the reward contains right keys.
+     *
      * @param array $reward
      * @return bool
      */
@@ -84,6 +99,7 @@ class User
 
     /**
      * Returns array which contains name of the reward and its count.
+     *
      * @param string $rewardName
      * @return bool|array
      */
@@ -96,6 +112,7 @@ class User
 
     /**
      * Updates reward if it exists or creates the new one if it doesn't exist.
+     *
      * @param string $rewardName
      * @param int $rewardCount
      * @return void
@@ -114,6 +131,7 @@ class User
 
     /**
      * Removes reward if the user has it.
+     *
      * @param string $rewardName
      * @return void
      */
@@ -122,11 +140,14 @@ class User
         if ($this->exists($this->rewards, 'emoji', $rewardName)) {
             $key = $this->findKey($this->rewards, 'emoji', $rewardName);
             unset($this->rewards[$key]);
+            //Without that json is saved incorrect way
+            $this->rewards = array_values($this->rewards);
         }
     }
 
     /**
      * Changes reward amount, can take a positive or negative number. Removes reward if its count less then one.
+     *
      * @param string $rewardName
      * @param int $value
      * @return void
@@ -168,6 +189,7 @@ class User
 
     /**
      * Returns a string which contains the username and his rewards.
+     *
      * @return string
      */
     public function __toString()
@@ -185,6 +207,7 @@ class User
 
     /**
      * Returns user's total rewards points. If points for current reward don't define function adds 0 for this reward.
+     *
      * @return int
      */
     public function getPointsAmount()

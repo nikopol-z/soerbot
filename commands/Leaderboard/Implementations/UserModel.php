@@ -22,14 +22,17 @@ class UserModel implements UserModelInterface
      * @var UserModel
      */
     protected static $instance;
+
     /**
      * @var User[]
      */
-    protected $users;
+    protected $users = [];
+
     /**
      * @var LeaderBoardStoreInterface
      */
     protected $store;
+
     /**
      * Line delimiter for separating users in stringify functions.
      * @var string
@@ -54,6 +57,7 @@ class UserModel implements UserModelInterface
 
     /**
      * Returns singleton instance.
+     *
      * @param LeaderBoardStoreInterface $store
      * @param string $linesDelimiter
      * @return UserModel
@@ -69,6 +73,7 @@ class UserModel implements UserModelInterface
 
     /**
      * Increments chosen reward and saves the result in the store.
+     *
      * @param string $username
      * @param string $rewardName
      * @return void
@@ -87,7 +92,8 @@ class UserModel implements UserModelInterface
 
     /**
      * Sorts user by their rewards' points.
-     * @param string (desc|asc)
+     *
+     * @param string $direction Can be "desc" or "asc" value
      * @return $this
      */
     public function sort($direction = 'desc')
@@ -115,6 +121,7 @@ class UserModel implements UserModelInterface
 
     /**
      * Remove chosen rewards.
+     *
      * @param string $username
      * @param string $rewardName
      * @return bool
@@ -131,11 +138,19 @@ class UserModel implements UserModelInterface
 
         $user->removeReward($rewardName);
 
+        if ($user->getPointsAmount() == 0) {
+            $this->remove($username);
+        } else {
+            $this->store->add([$user->getName(), $user->getRewards()]);
+            $this->store->save();
+        }
+
         return true;
     }
 
     /**
      * Makes a string from the all user's data.
+     *
      * @return string
      */
     public function getLeaderBoardAsString()
@@ -158,19 +173,55 @@ class UserModel implements UserModelInterface
     }
 
     /**
-     * Singleton cloning is forbidden.
+     * Remove user from store.
+     *
+     * @param string $username
+     * @return bool
      */
-    protected function __clone()
+    public function remove(string $username): bool
     {
+        $username = $this->cleanupUsername($username);
+
+        foreach ($this->users as $key => $user) {
+            if ($user->getName() === $username) {
+                unset($this->users[$key]);
+            }
+        }
+
+        $this->store->remove($username);
+
+        return $this->store->save();
+    }
+
+    /**
+     * Check if user exists.
+     *
+     * @param string $username
+     * @return bool
+     */
+    public function hasUser(string $username): bool
+    {
+        $username = $this->cleanupUsername($username);
+
+        foreach ($this->users as $user) {
+            if ($user->getName() === $username) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
      * Returns user instance for chosen username.
-     * @param $username
+     *
+     * @param string $username
      * @return User|null
      */
-    protected function get($username)
+    protected function get(string $username)
     {
+        $username = $this->cleanupUsername($username);
+
         if (!empty($this->users)) {
             return $this->first($this->users, function ($user) use ($username) {
                 return $user->getName() === $username;
@@ -178,5 +229,23 @@ class UserModel implements UserModelInterface
         }
 
         return null;
+    }
+
+    /**
+     * Cleanup username from unwanted characters.
+     *
+     * @param string $username
+     * @return string
+     */
+    private function cleanupUsername(string $username): string
+    {
+        return preg_replace('/^(\@)?(\w+)(\#\d{4})?$/Su', '${2}', $username);
+    }
+
+    /**
+     * Singleton cloning is forbidden.
+     */
+    protected function __clone()
+    {
     }
 }

@@ -22,6 +22,42 @@ class UserModelTest extends TestCase
         parent::setUp();
     }
 
+    public function testRemoveUserWithoutAt()
+    {
+        $username = 'existed';
+        $method = $this->getPrivateMethod($this->users, 'get');
+
+        $this->users->incrementReward($username, ':star:');
+        $this->assertInstanceOf(User::class, $method->invokeArgs($this->users, [$username]));
+
+        $this->users->remove($username);
+        $this->assertEmpty($method->invokeArgs($this->users, [$username]));
+    }
+
+    public function testRemoveUserWithAt()
+    {
+        $username = 'existed';
+        $method = $this->getPrivateMethod($this->users, 'get');
+
+        $this->users->incrementReward($username, ':star:');
+        $this->assertInstanceOf(User::class, $method->invokeArgs($this->users, [$username]));
+
+        $this->users->remove('@' . $username);
+        $this->assertEmpty($method->invokeArgs($this->users, [$username]));
+    }
+
+    public function testRemoveUserWithAtAndNumbers()
+    {
+        $username = 'existed';
+        $method = $this->getPrivateMethod($this->users, 'get');
+
+        $this->users->incrementReward($username, ':star:');
+        $this->assertInstanceOf(User::class, $method->invokeArgs($this->users, [$username]));
+
+        $this->users->remove('@' . $username . '#1234');
+        $this->assertEmpty($method->invokeArgs($this->users, [$username]));
+    }
+
     public function testIncrementReward()
     {
         $rewards = [
@@ -51,19 +87,9 @@ class UserModelTest extends TestCase
 
         $this->setPrivateVariableValue($this->users, 'users', $usersData);
 
-        $string = <<<EOT
-:one: Username1
-⭐
-
-:two: Username2
-⭐⭐
-
-:three: Username3
-⭐
-🏅
-
-
-EOT;
+        $string = ':one: Username1' . PHP_EOL . '⭐' . PHP_EOL . PHP_EOL .
+                  ':two: Username2' . PHP_EOL . '⭐⭐' . PHP_EOL . PHP_EOL .
+                  ':three: Username3' . PHP_EOL . '⭐' . PHP_EOL . '🏅' . PHP_EOL . PHP_EOL;
 
         $this->assertSame($string, $this->users->getLeaderBoardAsString());
     }
@@ -78,33 +104,13 @@ EOT;
 
         $this->setPrivateVariableValue($this->users, 'users', $usersData);
 
-        $stringDesc = <<<EOT
-:one: Username3
-⭐
-🏅
+        $stringDesc = ':one: Username3' . PHP_EOL . '⭐' . PHP_EOL . '🏅' . PHP_EOL . PHP_EOL .
+                      ':two: Username2' . PHP_EOL . '⭐⭐' . PHP_EOL . PHP_EOL .
+                      ':three: Username1' . PHP_EOL . '⭐' . PHP_EOL . PHP_EOL;
 
-:two: Username2
-⭐⭐
-
-:three: Username1
-⭐
-
-
-EOT;
-
-        $stringAsc = <<<EOT
-:one: Username1
-⭐
-
-:two: Username2
-⭐⭐
-
-:three: Username3
-⭐
-🏅
-
-
-EOT;
+        $stringAsc = ':one: Username1' . PHP_EOL . '⭐' . PHP_EOL . PHP_EOL .
+                     ':two: Username2' . PHP_EOL . '⭐⭐' . PHP_EOL . PHP_EOL .
+                     ':three: Username3' . PHP_EOL . '⭐' . PHP_EOL . '🏅' . PHP_EOL . PHP_EOL;
 
         $this->assertSame($stringDesc, $this->users->sort()->getLeaderBoardAsString());
         $this->assertSame($stringAsc, $this->users->sort('asc')->getLeaderBoardAsString());
@@ -112,6 +118,7 @@ EOT;
 
     public function testRemoveRewardsByType()
     {
+        $this->markTestSkipped();
         $usersData = [
             new User('Username1', [['emoji' => '⭐', 'count' => '1']]),
             new User('Username3', [['emoji' => '⭐', 'count' => '1'], ['emoji' => '🏅', 'count' => '1']]),
@@ -121,5 +128,30 @@ EOT;
 
         $this->assertTrue($this->users->removeRewardsByType('Username1', '⭐'));
         $this->assertTrue($this->users->removeRewardsByType('Username3', '🏅'));
+    }
+
+    public function testGetReturnExpectedWithoutAt()
+    {
+        $method = $this->getPrivateMethod($this->users, 'get');
+        $user = $method->invokeArgs($this->users, ['@Username1']);
+
+        $this->assertEquals('Username1', $user->getName());
+    }
+
+    public function testCleanUsernameWhenUsernameStartWithAt()
+    {
+        $method = $this->getPrivateMethod($this->users, 'cleanupUsername');
+
+        $this->assertEquals('existed', $method->invokeArgs($this->users, ['@existed']));
+    }
+
+    public function testHasUserReturnExpectedWhenUserExist()
+    {
+        $this->assertTrue($this->users->hasUser('Username1'));
+    }
+
+    public function testHasUserReturnExpectedWhenUserNotExist()
+    {
+        $this->assertFalse($this->users->hasUser('notexist'));
     }
 }

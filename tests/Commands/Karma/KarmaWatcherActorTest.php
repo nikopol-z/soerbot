@@ -4,7 +4,7 @@ namespace Tests\Commands;
 
 use Tests\TestCase;
 use SoerBot\Commands\Karma\WatcherActor\KarmaWatcherActor;
-use SoerBot\Commands\Karma\WatcherActor\Exceptions\InvalidUserNameException;
+use SoerBot\Commands\Karma\Exceptions\InvalidUserNameException;
 
 class KarmaWatcherTest extends TestCase
 {
@@ -28,7 +28,7 @@ class KarmaWatcherTest extends TestCase
         $this->assertEquals($this->watcher->isPassRequirements($commandMessage), true);
     }
 
-    public function testFaildIsPassRequirements(): void
+    public function testFailedIsPassRequirements(): void
     {
         $commandMessage = $this->createMock('CharlotteDunois\Yasmin\Models\Message');
         $user = $this->createMock('CharlotteDunois\Yasmin\Models\User');
@@ -75,6 +75,11 @@ class KarmaWatcherTest extends TestCase
         $this->expectException(InvalidUserNameException::class);
         $this->setPrivateVariableValue($this->watcher, 'user', $userModel);
         $this->watcher->run($commandMessage);
+    }
+
+    public function testGetUser(): void
+    {
+        $this->assertInstanceOf('SoerBot\Commands\Karma\Implementations\UserModel', $this->watcher->getUser());
     }
 
     public function __sleep()

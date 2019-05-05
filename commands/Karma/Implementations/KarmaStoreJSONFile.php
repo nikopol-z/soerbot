@@ -1,14 +1,12 @@
 <?php
 
-namespace SoerBot\Commands\Karma\WatcherActor\Implementations;
+namespace SoerBot\Commands\Karma\Implementations;
 
-use SoerBot\Commands\Karma\WatcherActor\Interfaces\KarmaStoreInterface;
-use SoerBot\Commands\Karma\WatcherActor\Exceptions\StoreFileNotFoundException;
+use SoerBot\Commands\Karma\Interfaces\KarmaStoreInterface;
+use SoerBot\Commands\Karma\Exceptions\StoreFileNotFoundException;
 
 /**
  * Class KarmeStoreJSONFile.
- *
- * @package SoerBot\Commands\Watch\WatcherActors\Karma\Implementations
  */
 class KarmaStoreJSONFile implements KarmaStoreInterface
 {
@@ -28,7 +26,7 @@ class KarmaStoreJSONFile implements KarmaStoreInterface
     public function __construct()
     {
         $this->data = [];
-        $this->file = __DIR__ . '/../store/karma.json';
+        $this->file = __DIR__.'/../store/karma.json';
     }
 
     /**
@@ -84,11 +82,19 @@ class KarmaStoreJSONFile implements KarmaStoreInterface
     public function createStoreFile()
     {
         try {
-            $storeFile = fopen($this->file, 'w');
-            fwrite($storeFile, '[]');
-            fclose($storeFile);
+            $storeFile = @fopen($this->file, 'w');
+
+            if (!$storeFile) {
+                throw new StoreFileNotFoundException('Failed to create karma store file. Check the file "karma.json" in folder "commands/Karma/store"');
+            }
+            if (!fwrite($storeFile, '[]')) {
+                throw new StoreFileNotFoundException('Failed to write in karma store file. Check the file "karma.json" in folder "commands/Karma/store"');
+            }
+            if (!fclose($storeFile)) {
+                throw new StoreFileNotFoundException('Failed to save karma store file. Check the file "karma.json" in folder "commands/Karma/store"');
+            }
         } catch (StoreFileNotFoundException $error) {
-            throw new StoreFileNotFoundException('Karma store file not exist. The file must be created manually');
+            throw new StoreFileNotFoundException($error->getMessage());
         }
     }
 }

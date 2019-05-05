@@ -4,6 +4,7 @@ namespace Tests\Commands;
 
 use Tests\TestCase;
 use SoerBot\Commands\PhpFact\Implementations\PhpFacts;
+use SoerBot\Commands\PhpFact\Exceptions\PhpFactException;
 use SoerBot\Commands\PhpFact\Implementations\FileStorage;
 use SoerBot\Commands\PhpFact\Abstractions\StorageInterface;
 
@@ -27,10 +28,54 @@ class PhpFactsTest extends TestCase
     /**
      * Exceptions.
      */
+    public function testSearchThrowExceptionWhenEmptyInput()
+    {
+        $this->expectException(PhpFactException::class);
+        $this->expectExceptionMessage('Passed pattern is empty.');
+
+        $this->facts->search('');
+    }
+
+    public function testSearchThrowExceptionWhenPatternIsLessThanMinLength()
+    {
+        $this->expectException(PhpFactException::class);
+        $this->expectExceptionMessage('Passed pattern is less than minimum ' . PhpFacts::PATTERN_MIN_LENGTH . ' chars.');
+
+        $this->facts->search(str_repeat('t', PhpFacts::PATTERN_MIN_LENGTH - 1));
+    }
+
+    public function testSearchThrowExceptionWhenPatternIsMoreThanMaxLength()
+    {
+        $this->expectException(PhpFactException::class);
+        $this->expectExceptionMessage('Passed pattern is more than maximum ' . PhpFacts::PATTERN_MAX_LENGTH . ' chars.');
+
+        $this->facts->search(str_repeat('t', PhpFacts::PATTERN_MAX_LENGTH + 1));
+    }
 
     /**
      * Corner cases.
      */
+    public function testSearchDontThrowExceptionWhenPatternIsMin()
+    {
+        try {
+            $this->facts->search(str_repeat('t', PhpFacts::PATTERN_MIN_LENGTH));
+        } catch (PhpFactException $e) {
+            $this->fail('Exception thrown on min plus one with message ' . $e->getMessage() . '');
+        }
+
+        $this->assertTrue(true);
+    }
+
+    public function testSearchDontThrowExceptionWhenPatternIsMax()
+    {
+        try {
+            $this->facts->search(str_repeat('t', PhpFacts::PATTERN_MAX_LENGTH));
+        } catch (PhpFactException $e) {
+            $this->fail('Exception thrown on min plus one with message ' . $e->getMessage() . '');
+        }
+
+        $this->assertTrue(true);
+    }
 
     /**
      * @dataProvider provideFactsContentCorners
@@ -111,8 +156,74 @@ class PhpFactsTest extends TestCase
         new PhpFacts($storage);
     }
 
+    public function testSearchFindNothingWhenNotExistPattern()
+    {
+        $this->assertEmpty($this->facts->search('not_exist'));
+    }
+
+    public function testSearchFindOneWhenOneExistPattern()
+    {
+        $result = $this->facts->search('yield');
+
+        $this->assertNotEmpty($result);
+        $this->assertCount(1, $result);
+    }
+
+    public function testSearchFindTwoWhenTwoExistPattern()
+    {
+        $result = $this->facts->search('ооп');
+
+        $this->assertNotEmpty($result);
+        $this->assertCount(2, $result);
+    }
+
+    public function testSearchFindFiveWhenFiveExistPattern()
+    {
+        $result = $this->facts->search('java');
+
+        $this->assertNotEmpty($result);
+        $this->assertCount(5, $result);
+    }
+
+    public function testSearchFindOneWhenOneWithSpaceExistPattern()
+    {
+        $result = $this->facts->search('PHP 5');
+
+        $this->assertNotEmpty($result);
+        $this->assertCount(1, $result);
+    }
+
+    public function testSearchFindOneWhenOneAtLineBeginning()
+    {
+        $result = $this->facts->search('помимо');
+
+        $this->assertNotEmpty($result);
+        $this->assertStringStartsWith('Помимо развитого ООП', $result[0]);
+    }
+
+    public function testSearchFindOneWhenOneAtLineEnd()
+    {
+        $result = $this->facts->search('миксины');
+
+        $this->assertNotEmpty($result);
+        $this->assertStringEndsWith('они же примеси или миксины.', $result[0]);
+    }
+
+    public function testSearchFindOneWhenThreeInsideWordExistPattern()
+    {
+        $result = $this->facts->search('orm');
+
+        $this->assertNotEmpty($result);
+        $this->assertCount(1, $result);
+    }
+
+    public function testSearchFindNothingWhenOneInsideWordExistPattern()
+    {
+        $this->assertEmpty($this->facts->search('octrin'));
+    }
+
     public function testCountReturnExpectedCount()
     {
-        $this->assertSame(5, $this->facts->count());
+        $this->assertSame(16, $this->facts->count());
     }
 }
